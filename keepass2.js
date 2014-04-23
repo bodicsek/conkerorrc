@@ -18,6 +18,14 @@ function encrypt(data, iv) {
     return sjcl.codec.base64.fromBits(enc);
 }
 
+function decrypt(data, iv) {
+    var dec = sjcl.mode.cbc.decrypt(
+            new sjcl.cipher.aes(sjcl.codec.base64.toBits(key)),
+            sjcl.codec.base64.toBits(data),
+            sjcl.codec.base64.toBits(iv));
+    return sjcl.codec.utf8String.fromBits(dec);
+}
+
 function create_base_request(requestType) {
     var request = {};
     request.RequestType = requestType;
@@ -76,7 +84,13 @@ function keepass2_get_logins(url, success, error) {
     send_request(req, function(r) {
 	var resp = JSON.parse(r);
 	if(resp.Success && resp.Entries.length != 0) {
-	    success();
+	    var decryptedEntries = _.map(resp.Entries, function(entry) { 
+		var decryptedEntry = {};
+		decryptedEntry.Login = decrypt(entry.Login, resp.Nonce);
+		decryptedEntry.Password = decrypt(entry.Password, resp.Nonce);
+		return decryptedEntry; 
+	    });
+	    success(decryptedEntries);
 	} else {
 	    error();
 	}
@@ -94,7 +108,9 @@ interactive("keepass2_get_logins",
 	    "tries to get keepass2 database login entries for the current site",
 	    function (I) {
 		keepass2_connect(function() { keepass2_get_logins(I.buffer.document.location,
-								  function() { I.minibuffer.message("keepass2: credentials found.");},
+								  function(logins) { 
+								      I.minibuffer.message("keepass2: login = " + logins[0].Login + " password = " + logins[0].Password);
+								  },
 								  function() { I.minibuffer.message("keepass2: credentials not found.")}); },
 				 function() { I.minibuffer.message("keepass2: connection FAILED.");});
 	    });
