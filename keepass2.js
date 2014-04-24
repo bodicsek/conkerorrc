@@ -92,7 +92,7 @@ var Keepass2 = function() {
 
     return {
 
-	keepass2_connect : function(success, error) {
+	connect : function(success, error) {
 	    var req = createBaseRequest("test-associate");
 	    sendRequest(req, function(r) {
 		var resp = JSON.parse(r);
@@ -113,7 +113,7 @@ var Keepass2 = function() {
 	    });
 	},
 
-	keepass2_get_logins : function(url, success, error) {
+	getLogins : function(url, success, error) {
 	    var req = createBaseRequest("get-logins");
 	    req.Url = encrypt(url, req.Nonce);
 	    sendRequest(req, function(r) {
@@ -132,7 +132,7 @@ var Keepass2 = function() {
 	    });
 	},
 
-	apply_credentials : function(document, creds) {
+	applyCredentials : function(document, creds) {
 	    return (applyLogin(document, creds[0].Login) &&
 		    applyPassword(document, creds[0].Password));
 	}
@@ -143,20 +143,20 @@ var Keepass2 = function() {
 interactive("keepass2_connect",
 	    "tries to connect to a keepass2 database",
 	    function (I) {
-		Keepass2.keepass2_connect(function() { I.minibuffer.message("keepass2: connection OK."); },
-					  function() { I.minibuffer.message("keepass2: connection FAILED."); });
+		Keepass2.connect(function() { I.minibuffer.message("keepass2: connection OK."); },
+				 function() { I.minibuffer.message("keepass2: connection FAILED."); });
 	    });
 
 interactive("keepass2_get_logins",
 	    "tries to get keepass2 database login entries for the current site",
 	    function (I) {
-		Keepass2.keepass2_connect(function() { Keepass2.keepass2_get_logins(I.buffer.document.location,
-										    function(logins) { 
-											if (! Keepass2.apply_credentials(I.buffer.document, logins)) {
-											    I.minibuffer.message("keepass2: login = " + logins[0].Login + " password = " + logins[0].Password);
-											}
-										    },
-										    function() { I.minibuffer.message("keepass2: credentials not found.")}); },
-					  function() { I.minibuffer.message("keepass2: connection FAILED.");});
+		Keepass2.connect(function() { Keepass2.getLogins(I.buffer.document.location,
+								 function(logins) { 
+								     if (! Keepass2.applyCredentials(I.buffer.document, logins)) {
+									 I.minibuffer.message("keepass2: login = " + logins[0].Login + " password = " + logins[0].Password);
+								     }
+								 },
+								 function() { I.minibuffer.message("keepass2: credentials not found.")}); },
+				 function() { I.minibuffer.message("keepass2: connection FAILED.");});
 	    });
 
