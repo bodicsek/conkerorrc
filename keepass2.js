@@ -97,6 +97,42 @@ function keepass2_get_logins(url, success, error) {
     });
 }
 
+function apply_text_by_name(document, name, text) {
+    var result = document.getElementsByName(name);
+    if (result != null && result.length != 0) {
+	for (var i = 0; i < result.length; i++) {
+	    result.item(i).value = text;
+	}
+	return true;
+    }
+    return false;
+}
+
+function apply_login(document, login) {
+    return (apply_text_by_name(document, "felhasznaloNev", login) ||
+	    apply_text_by_name(document, "log_email", login) ||
+	    apply_text_by_name(document, "session_key", login) ||
+	    apply_text_by_name(document, "username", login) ||
+	    apply_text_by_name(document, "userid", login) ||
+	    apply_text_by_name(document, "login", login) ||
+	    apply_text_by_name(document, "login_email", login) ||
+	    apply_text_by_name(document, "email", login));
+}
+
+function apply_password(document, password) {
+    return (apply_text_by_name(document, "jelszo", password) ||
+	    apply_text_by_name(document, "login_password", password) ||
+	    apply_text_by_name(document, "log_password", password) ||
+	    apply_text_by_name(document, "session_password", password) ||
+	    apply_text_by_name(document, "pass", password) ||
+	    apply_text_by_name(document, "password", password));
+}
+
+function apply_credentials(document, creds) {
+    return (apply_login(document, creds[0].Login) &&
+	    apply_password(document, creds[0].Password));
+}
+
 interactive("keepass2_connect",
 	    "tries to connect to a keepass2 database",
 	    function (I) {
@@ -109,7 +145,9 @@ interactive("keepass2_get_logins",
 	    function (I) {
 		keepass2_connect(function() { keepass2_get_logins(I.buffer.document.location,
 								  function(logins) { 
-								      I.minibuffer.message("keepass2: login = " + logins[0].Login + " password = " + logins[0].Password);
+								      if (! apply_credentials(I.buffer.document, logins)) {
+									  I.minibuffer.message("keepass2: login = " + logins[0].Login + " password = " + logins[0].Password);
+								      }
 								  },
 								  function() { I.minibuffer.message("keepass2: credentials not found.")}); },
 				 function() { I.minibuffer.message("keepass2: connection FAILED.");});
