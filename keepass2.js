@@ -3,7 +3,7 @@ var Keepass2 = function() {
     var name = "conkeror";
     var key = "Lgh8xMEkV2j10bG7O42GjCibsUEpM80T7Db+skKGiNc=";
 
-    function generate_iv() {
+    function generateIv() {
 	var iv = [];
 	for (var i = 0; i < 16; i++) {
             iv.push(String.fromCharCode(Math.floor(Math.random() * 256)));
@@ -28,17 +28,17 @@ var Keepass2 = function() {
 	return sjcl.codec.utf8String.fromBits(dec);
     }
 
-    function create_base_request(requestType) {
+    function createBaseRequest(requestType) {
 	var request = {};
 	request.RequestType = requestType;
 	request.Id = name;
-	var iv = generate_iv();
+	var iv = generateIv();
 	request.Nonce = iv;
 	request.Verifier = encrypt(iv, iv);
 	return request;    
     }
 
-    function send_request(req, callback) {
+    function sendRequest(req, callback) {
 	var Xhr = {
 	    request: function(method, request) {
 		var xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"].createInstance();
@@ -59,7 +59,7 @@ var Keepass2 = function() {
 	Xhr.post(JSON.stringify(req));
     }
 
-    function apply_text_by_name(document, name, text) {
+    function applyTextByName(document, name, text) {
 	var result = document.getElementsByName(name);
 	if (result != null && result.length != 0) {
 	    for (var i = 0; i < result.length; i++) {
@@ -70,36 +70,36 @@ var Keepass2 = function() {
 	return false;
     }
 
-    function apply_login(document, login) {
-	return (apply_text_by_name(document, "felhasznaloNev", login) ||
-		apply_text_by_name(document, "log_email", login) ||
-		apply_text_by_name(document, "session_key", login) ||
-		apply_text_by_name(document, "username", login) ||
-		apply_text_by_name(document, "userid", login) ||
-		apply_text_by_name(document, "login", login) ||
-		apply_text_by_name(document, "login_email", login) ||
-		apply_text_by_name(document, "email", login));
+    function applyLogin(document, login) {
+	return (applyTextByName(document, "felhasznaloNev", login) ||
+		applyTextByName(document, "log_email", login) ||
+		applyTextByName(document, "session_key", login) ||
+		applyTextByName(document, "username", login) ||
+		applyTextByName(document, "userid", login) ||
+		applyTextByName(document, "login", login) ||
+		applyTextByName(document, "login_email", login) ||
+		applyTextByName(document, "email", login));
     }
 
-    function apply_password(document, password) {
-	return (apply_text_by_name(document, "jelszo", password) ||
-		apply_text_by_name(document, "login_password", password) ||
-		apply_text_by_name(document, "log_password", password) ||
-		apply_text_by_name(document, "session_password", password) ||
-		apply_text_by_name(document, "pass", password) ||
-		apply_text_by_name(document, "password", password));
+    function applyPassword(document, password) {
+	return (applyTextByName(document, "jelszo", password) ||
+		applyTextByName(document, "login_password", password) ||
+		applyTextByName(document, "log_password", password) ||
+		applyTextByName(document, "session_password", password) ||
+		applyTextByName(document, "pass", password) ||
+		applyTextByName(document, "password", password));
     }
 
     return {
 
 	keepass2_connect : function(success, error) {
-	    var req = create_base_request("test-associate");
-	    send_request(req, function(r) {
+	    var req = createBaseRequest("test-associate");
+	    sendRequest(req, function(r) {
 		var resp = JSON.parse(r);
 		if (! resp.Success) {
 		    req.RequestType = "associate";
 		    req.Key = key;
-		    send_request(req, function(r1) {
+		    sendRequest(req, function(r1) {
 			var resp1 = JSON.parse(r1);
 			if (! resp1.Success) {
 			    error();
@@ -114,9 +114,9 @@ var Keepass2 = function() {
 	},
 
 	keepass2_get_logins : function(url, success, error) {
-	    var req = create_base_request("get-logins");
+	    var req = createBaseRequest("get-logins");
 	    req.Url = encrypt(url, req.Nonce);
-	    send_request(req, function(r) {
+	    sendRequest(req, function(r) {
 		var resp = JSON.parse(r);
 		if(resp.Success && resp.Entries.length != 0) {
 		    var decryptedEntries = _.map(resp.Entries, function(entry) { 
@@ -133,8 +133,8 @@ var Keepass2 = function() {
 	},
 
 	apply_credentials : function(document, creds) {
-	    return (apply_login(document, creds[0].Login) &&
-		    apply_password(document, creds[0].Password));
+	    return (applyLogin(document, creds[0].Login) &&
+		    applyPassword(document, creds[0].Password));
 	}
 
     };
