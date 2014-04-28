@@ -2,12 +2,12 @@ var Keepass2 = function () {
 
     "use strict";
 
-    var name = "conkerorHomeLinux";
+    var storageKeyAes = "keepass2Key";
+    var storageKeyId  = "keepass2Id";
 
-    var KeyStorage = function () {
+    var LocalStorage = function () {
 
-        var storageKey = "keepass2Key";
-        var invalidValue = "no data";
+        var _invalidValue = "no data";
 
         function open() {
             var url = "http://keepass2.conkeror.com";
@@ -22,31 +22,31 @@ var Keepass2 = function () {
 
         return {
 
-            invalidKey : invalidValue,
+            invalidValue : _invalidValue,
 
-            store : function (value) {
+            store : function (key, value) {
                 var db = open();
                 if (db !== null) {
-                    db.setItem(storageKey, value);
+                    db.setItem(key, value);
                 }
             },
 
-            retrieve : function () {
+            retrieve : function (key) {
                 var db = open();
                 if (db !== null) {
-                    var key = db.getItem(storageKey);
-                    if (key !== null) {
-                        return key;
+                    var value = db.getItem(key);
+                    if (value !== null) {
+                        return value;
                     }
-                    return invalidValue;
+                    return _invalidValue;
                 }
-                return invalidValue;
+                return _invalidValue;
             },
 
-            remove : function () {
+            remove : function (key) {
                 var db = open();
                 if (db !== null) {
-                    db.removeItem(storageKey);
+                    db.removeItem(key);
                 }
             }
 
@@ -63,12 +63,20 @@ var Keepass2 = function () {
     }
 
     function retrieveKey() {
-        var key = KeyStorage.retrieve();
-        if (KeyStorage.invalidKey === key) {
+        var key = LocalStorage.retrieve(storageKeyAes);
+        if (LocalStorage.invalidValue === key) {
             key = generateKey();
-            KeyStorage.store(key);
+            LocalStorage.store(storageKeyAes, key);
         }
         return key;
+    }
+
+    function retrieveId() {
+        return LocalStorage.retrieve(storageKeyId);
+    }
+
+    function storeId(id) {
+        LocalStorage.store(storageKeyId, id);
     }
 
     function generateIv() {
@@ -99,7 +107,7 @@ var Keepass2 = function () {
     function createBaseRequest(requestType) {
         var request = {};
         request.RequestType = requestType;
-        request.Id = name;
+        request.Id = retrieveId();
         var iv = generateIv();
         request.Nonce = iv;
         request.Verifier = encrypt(iv, iv);
@@ -172,6 +180,7 @@ var Keepass2 = function () {
                         if (! resp1.Success) {
                             error();
                         } else {
+                            storeId(resp1.Id);
                             success();
                         }
                     });
