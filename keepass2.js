@@ -154,7 +154,8 @@ var Keepass2 = function () {
                 applyTextByName(document, "userid", login) ||
                 applyTextByName(document, "login", login) ||
                 applyTextByName(document, "login_email", login) ||
-                applyTextByName(document, "email", login));
+                applyTextByName(document, "email", login) ||
+                applyTextByName(document, "session[username_or_email]", login));
     }
 
     function applyPassword(document, password) {
@@ -163,7 +164,8 @@ var Keepass2 = function () {
                 applyTextByName(document, "log_password", password) ||
                 applyTextByName(document, "session_password", password) ||
                 applyTextByName(document, "pass", password) ||
-                applyTextByName(document, "password", password));
+                applyTextByName(document, "password", password) ||
+                applyTextByName(document, "session[password]", password));
     }
 
     return {
