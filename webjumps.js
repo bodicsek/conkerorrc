@@ -10,4 +10,4 @@ define_webjump("aria2", "http://ziahamza.github.io/webui-aria2/");
 define_webjump("easynews", "https://members.easynews.com/2.0/");
 define_webjump("deezer-light", "http://vladimir.sh/playground/deezer_light/#/playlists");
 
-
+webjumps.g = webjumps.google;
